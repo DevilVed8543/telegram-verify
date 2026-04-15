@@ -6,7 +6,8 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
-let usedIPs = {}
+// store verified users (user_id -> ip)
+let verified = {}
 
 app.post("/verify", (req, res) => {
   let ip =
@@ -19,11 +20,20 @@ app.post("/verify", (req, res) => {
     return res.json({ status: "error" })
   }
 
-  if (usedIPs[ip]) {
+  // if same user tries from another device
+  if (verified[user_id] && verified[user_id] !== ip) {
     return res.json({ status: "fail" })
   }
 
-  usedIPs[ip] = user_id
+  // if same device used by another user
+  for (let u in verified) {
+    if (verified[u] === ip && u != user_id) {
+      return res.json({ status: "fail" })
+    }
+  }
+
+  // save verification
+  verified[user_id] = ip
 
   return res.json({ status: "ok" })
 })
@@ -31,10 +41,10 @@ app.post("/verify", (req, res) => {
 app.get("/check", (req, res) => {
   let user_id = req.query.user_id
 
-  let found = Object.values(usedIPs).includes(user_id)
+  let isVerified = !!verified[user_id]
 
-  return res.json({ verified: found })
+  return res.json({ verified: isVerified })
 })
 
 const PORT = process.env.PORT || 3000
-app.listen(PORT, () => console.log("Server running"))
+app.listen(PORT, () => console.log("Server running on " + PORT))
