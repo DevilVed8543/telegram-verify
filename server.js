@@ -15,6 +15,10 @@ app.post("/verify", (req, res) => {
 
   let user_id = req.body.user_id
 
+  if (!user_id) {
+    return res.json({ status: "error" })
+  }
+
   if (usedIPs[ip]) {
     return res.json({ status: "fail" })
   }
@@ -29,12 +33,8 @@ app.get("/check", (req, res) => {
 
   let found = Object.values(usedIPs).includes(user_id)
 
-  if (found) {
-    return res.json({ verified: true })
-  } else {
-    return res.json({ verified: false })
-  }
+  return res.json({ verified: found })
 })
 
 const PORT = process.env.PORT || 3000
-app.listen(PORT, () => console.log("Server running on " + PORT))
+app.listen(PORT, () => console.log("Server running"))
